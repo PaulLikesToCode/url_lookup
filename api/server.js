@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 var cluster = require('cluster');
 var path = require('path');
 var config = require('./app_config');
@@ -20,15 +20,23 @@ if (cluster.isMaster) {
 	let cass_client = new cassandra.Client({contactPoints: config.cassandra_contactPoints, keyspace: config.cassandra_keyspace});
 	// For now we're just doing this level of logging. Real app would do much more
 	app.use(morgan('dev'));
+	// Allow CORS, since we don't know what domain we're interacting with. 
+	// TODO: Move some of this into a middleware file. 
+	app.use(function(req, res, next) {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+		next();
+	});
 	// Host might include a port, which we have to strip because we don't need it. 
 	// We don't care at all about params, but it's in the api spec. Maybe in the future. 
-	app.get('/api/v1/:host/:para', (req, res) => {
+	// So if we get www.example.com/something, the route will look like /api/v1/www.example.com/something, and all we care about is www.example.com. 
+	app.get('/api/v1/:host*', (req, res) => {
 		// Pass to a function here, validating hostname
 		let hostname = req.params.host;
 		// FIX ME: I'm not happy about those escaped quotes. It looks like Cassandra doesn't like double quotes. 
 		const get_query = 'SELECT count(*) FROM blacklist WHERE url=\''+hostname+'\'';
-		const yes_message = 'Watch out, url is in darklist';
-		const no_message = 'URL not found. Should be ok';
+		const yes_message = 'Watch out, url is in darklist.';
+		const no_message = 'URL not found. Should be ok.';
 		// OK ready to query Cassandra - 
 		cass_client.execute(get_query, (err, result) => {
 			if (err) {
@@ -43,7 +51,7 @@ if (cluster.isMaster) {
 		});
 
 	});
-	app.post('/api/v1/:host/:para', (req, res) => {
+	app.post('/api/v1/:host*', (req, res) => {
 		// When should we send this? 
 		const thanks_message = 'Thank you for updating the blacklist';
 		const problem_message = 'The URL you send seems to have a problem.';
