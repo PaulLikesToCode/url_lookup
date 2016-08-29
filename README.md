@@ -41,12 +41,12 @@ npm install (this will get all the packages listed in package.json)
 ```
 If you want to run in the foreground:
 ```
-node server.js (just to see it work)
+node index.js (just to see it work)
 ```
 If you want to run in the background:
 ```
 npm install -g forever
-forever start server.js
+forever start index.js
 ```
 A post request will insert a new url into the table, and a get request will tell you if the url is in the table or not. Both requests use the same format: `http://localhost:3000/api/v1/whatever_url`. The url can include parameters, which we just ignore. We assume that if www&#46;superscaryurl&#46;com/boo is malicious, anything on the www&#46;superscaryurl&#46;com should be on the blacklist. So we only save and lookup the FQDN. 
 
