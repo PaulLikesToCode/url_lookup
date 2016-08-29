@@ -5,7 +5,8 @@ let start = function () {
 	let morgan = require('morgan');
 	let cassandra = require('cassandra-driver');
 	let app = express();
-	let helpers = require('helpers').helpers;
+	let helpers = require('./helpers').helpers;
+	let constants = require('./constants').constants;
 	let cass_client = new cassandra.Client({contactPoints: config.cassandra_contactPoints, keyspace: config.cassandra_keyspace});
 	// For now we're just doing this level of logging. Real app would do much more
 	app.use(morgan('dev'));
@@ -17,61 +18,63 @@ let start = function () {
 		next();
 	});
 	// Host might include a port, which we have to strip because we don't need it. 
-	// We don't care at all about params, but it's in the api spec. Maybe in the future. 
-	// So if we get www.example.com/something, the route will look like /api/v1/www.example.com/something, and all we care about is www.example.com. 
+	// So if we get www.example.com:8000/something, the route will look like /api/v1/www.example.com:8000/something, and all we care about is www.example.com. 
 	app.get('/api/v1/:host*', (req, res) => {
-		// Pass to a function here, validating hostname
-		let hostname = req.params.host;
-		// FIX ME: I'm not happy about those escaped quotes. It looks like Cassandra doesn't like double quotes. 
-		const get_query = 'SELECT count(*) FROM blacklist WHERE url=\''+hostname+'\'';
-		const yes_message = 'Watch out, url is in darklist.';
-		const no_message = 'URL not found. Should be ok.';
+		let url = req._parsedUrl.pathname.slice(8);
+		url = helpers.decodeURL(url);
+		// Get rid of the protocol, if it's there
+		let hostname = helpers.getHostname(url);
+		const get_query = `SELECT count(*) FROM blacklist WHERE url='${hostname}'`;
 		// OK ready to query Cassandra - 
 		cass_client.execute(get_query, (err, result) => {
 			if (err) {
-				console.log(err);
-				res.send(api_error_message);
+				res.send(constants.api_error_message);
 			}
 			if (result.rows[0].count > 0) {
-				res.send(yes_message);
+				res.send(constants.yes_message);
 			} else {
-				res.send(no_message);
+				res.send(constants.no_message);
 			}
 		});
 
 	});
 	app.post('/api/v1/:url*', (req, res) => {
-		// When should we send this? 
-		const thanks_message = 'Thank you for updating the blacklist';
-		const problem_message = 'The URL you send seems to have a problem.';
-		// 
+		// If the url doesn't pass certain checks, we won't hit the db, just return a message. 
 		let url_ok = true;
-		// Grab the hostname
-		let url = req.params.url;
-		// Run the url through some tests. Make sure basic formatting is all there. 
+		// Grab the url
+		let url = req._parsedUrl.pathname.slice(8);
+		// Run the url through some tests. Make sure basic formatting is all there. We could wrap this in one function. 
 		// First decode any encoding
 		url = helpers.decodeURL(url);
-		// now make sure all we have is actually the hostname, no protocol, 
-		hostname = helpers.getHostname(url);
+		// now make sure all we have is actually the hostname, no protocol. This also makes the string lower case
+		let hostname = helpers.getHostname(url);
 		// Now check if it's obviously not a real url (ie has no period)
 		url_ok = helpers.checkForPeriod(hostname);
 		// More testing needed here? 
-		
 		// Send back a problem message if needed. 
+		// TO DO: Rewrite this in promises. This is too many nested callbacks. 
 		if (url_ok === false) {
-			// Just close the connection
-			// Improve this logic at some point. Maybe send back a different http status, rather than setting res.set('Connection', 'close')?
+			// TO DO: Improve this logic at some point. Maybe send back a different http status, rather than setting res.set('Connection', 'close')?
 			res.set('Connection', 'close');
 			res.send(problem_message);
 		} else {
-			const insert_query = 'INSERT INTO blacklist (url, ts) VALUES (\''+hostname+'\', toTimestamp(now()));';
+			const insert_query = `INSERT INTO blacklist (url, created, last_updated, is_bad) VALUES ('${hostname}', toTimestamp(now()), toTimestamp(now()), 1) IF NOT EXISTS;`;
 			cass_client.execute(insert_query, (err, result) => {
 				if (err) {
-					console.log(err);
-					res.send(api_error_message);
-				}
-				else {
-					res.send(thanks_message);
+					res.send(constants.api_error_message);
+				} else {
+					if (result.rows[0]['[applied]'] === false) {
+						const update_query = `UPDATE blacklist SET last_updated = toTimestamp(now()) WHERE url = '${hostname}'`;
+						cass_client.execute(update_query, (err, result) => {
+							if (err) {
+								res.send(constants.api_error_message);
+							} else {
+								res.send(constants.thanks_message);
+							}
+						});
+					} else {
+						res.send(constants.thanks_message);
+					}
 				}
 			});		
 		}

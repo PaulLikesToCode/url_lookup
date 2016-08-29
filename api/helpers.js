@@ -2,9 +2,15 @@
 // This is a bunch of functions that sanitize the url input data. 
 let url = require('url')
 let helpers = {
-
 	// Strips the protocol, port, path, query, or anything but hostname from input
 	getHostname: function (urlString) {
+		// The protocol is required to make this work. But it's better than doing it manually. 
+		// There could be other protocols than http, so this could be expanded. 
+		if (urlString.slice(0, 7) === 'http://' || urlString.slice(0, 8) === 'https://') {
+			// do nothing
+		} else {
+			urlString = 'http://'+urlString;
+		}
 		let urlObj = url.parse(urlString);
 		return urlObj.hostname;
 	}, 
@@ -16,13 +22,6 @@ let helpers = {
 	decodeURL: function (urlString) {	
 		return decodeURI(urlString);
 	}
-
-
-
-
-
-
-
 
 }
 

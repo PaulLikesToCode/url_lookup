@@ -2,8 +2,6 @@
 URL Lookup provides a simple way to build and query a URL blacklist. The appliction uses Cassandra as the database, NodeJS as the API level, and provides a simple front end that can run on any web server. The following instructions are to get it running on a single computer, meaning a single instance for each part of the app, running on a different port.
 
 ## Cassandra
-Pros for Cassandra: High scalability and performance. Decentralized architecture. Excellent single-row read performance. Consistency can be configured. Several years of development, so a well worn path. Apache license. Key caching is enabled by default. 
-
 Download Cassandra (http://cassandra.apache.org/), and start Cassandra: 
 ```
 cd/install_directory
@@ -14,7 +12,9 @@ Or to run in the foreground:
 bin/cassandra -f
 ```
 
-We're only using one keyspace, called urls, and a table called blacklist. Blacklist has two fields, url and ts. The primary key is url, because we need to quickly look up urls. The timestampe (ts) field isn't in use right now, but it might be a nice piece of information to collect. ts updates if a user enters a url that is already in the database. In other words, if a url already exists in the table, Insert will become Update. 
+We're only using one keyspace, called urls, and a table called blacklist. Blacklist has four fields, url, created (timestamp), last_updated (timestamp) and is_bad (smallint). The primary key is url, because we need to quickly look up urls. Created, last_updated, and is_bad aren't in use right now, but they might be useful in the future. Created should never change. Last_updated will change if somebody tried to add a url that's already in the database. is_bad is set to 1 on insert. It could be used later, say changed to 0 if we find out the url is not malicious. We could also add field for severity of maliciousness, which user entered the url, etc. 
+
+Currently both read and write access the same database. If performance became an issue, it would make sense to have a separate database for reading and writing, with reading not requiring all of the fields. Caching is turned on for keys, and filtering is turned off. Of course that should be changed as per production requirements. 
 
 ### To create the schema:
 ```
@@ -23,10 +23,12 @@ CREATE KEYSPACE urls WITH replication = {
 	'replication': '1'
 };
 
-CREATE TABLE blacklist (
-	url text PRIMARY KEY,
-	ts bigint
-);
+CREATE TABLE blacklist ( 
+	url text PRIMARY KEY, 
+	created bigint, 
+	last_updated bigint, 
+	is_bad smallint
+	) WITH caching = {'keys': 'all'};
 ```
 
 ## NodeJS

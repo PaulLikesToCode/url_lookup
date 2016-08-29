@@ -11,8 +11,9 @@ let helpers = require('../api/helpers').helpers;
 
 describe('Return only the hostname for a url', function () {
 	it ('should return www.example.com from http://www.example.com:8000/path/to/nowhere', function (done) {
-		let output = helpers.getHostname('http://www.example.com:8000/path/to/nowhere');
+		let output = helpers.getHostname('www.example.com:8000/path/to/nowhere');
 		(output).should.equal('www.example.com');
+		console.log('output, ', output);
 		done();
 	});
 });

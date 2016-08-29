@@ -16,6 +16,7 @@ if (cluster.isMaster && config.use_cluster === true) {
 	server.start();
 }
 
+// If a worker dies, fork it again. 
 cluster.on('exit', function (worker) {
 	cluster.fork();
 });
