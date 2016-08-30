@@ -63,6 +63,15 @@ For this project, subdomains are treated separately. For example, putting mail.y
 
 This, however, leads to a problem with what to do with 'www.'. Say a naked domain, example.com, is entered into the blacklist. The next user looks up 'www.example.com', and is told that's ok. Then the 2nd user goes and gets some malware from www.example.com. On the question of how restrictive to make url_lookup, I have erred on the side of flexibility. It will be easy to make it more restrictive, harder to make it more flexible. 
 
+### Unit Tests
+A few unit tests written. to run the tests:
+```
+cd tests/
+npm install mocha
+mocha tests.js
+```
+Test results will print to the console. 
+
 ## Front End
 The front end is a very simple webpage with a little bit of Bootstrap (v. 3.3.7) and jQuery (v. 3.1.0). Both Bootstrap and jQuery are served by a cdn, mostly to keep the directory clean. To run in production, consider hosting these files yourself. The front end is in `static/index.html`. You can just open the file in a browser, or run a simple web server. For example, from the static directory, you can start a simple web server with `node http-server -p 8000`. Now if you go to http://127.0.0.1:8000, you'll get index.html. 
 
