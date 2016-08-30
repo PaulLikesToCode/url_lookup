@@ -1,7 +1,7 @@
 'use strict';
 let cluster = require('cluster');
 let config = require('./app_config');
-let server = require('./server2');
+let server = require('./server');
 // let config = require('./app_config');
 
 if (cluster.isMaster && config.use_cluster === true) {

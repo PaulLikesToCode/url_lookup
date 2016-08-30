@@ -1,5 +1,5 @@
 'use strict';
-// This is a bunch of functions that sanitize the url input data. 
+// Just some functions that help sanitize the incoming url. There could be a lot more.
 let url = require('url')
 let helpers = {
 	// Strips the protocol, port, path, query, or anything but hostname from input

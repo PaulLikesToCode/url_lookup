@@ -56,6 +56,11 @@ And then check if it was saved: `curl http://localhost:3000/api/v1/www.superscar
 
 Or check another path on the FQDN: `curl http://localhost:3000/api/v1/www.superscaryurl.com/boo/hoo`. 
 
+##### A word about domains
+For this project, subdomains are treated separately. For example, putting mail.yahoo.com on the blacklist won't put news.yahoo.com, or www.yahoo.com. That was decided because subdomains generally are separate, somewhat isolated, parts of a business. Suppose somebody hacks into news.yahoo.com and implants some drive by malware. Would we want to shut down all of yahoo? 
+
+This, however, leads to a problem with what to do with 'www.'. Say a naked domain, example.com, is entered into the blacklist. The next user looks up 'www.example.com', and is told that's ok. Then the 2nd user goes and gets some malware from www.example.com. On the question of how restrictive to make url_lookup, I have erred on the side of flexibility. It will be easy to make it more restrictive, harder to make it more flexible. 
+
 ## Front End
 The front end is a very simple webpage with a little bit of Bootstrap (v. 3.3.7) and jQuery (v. 3.1.0). Both Bootstrap and jQuery are served by a cdn, mostly to keep the directory clean. To run in production, consider hosting these files yourself. The front end is in `static/index.html`. You can just open the file in a browser, or run a simple web server. For example, from the static directory, you can start a simple web server with `node http-server -p 8000`. Now if you go to http://127.0.0.1:8000, you'll get index.html. 
 
