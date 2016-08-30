@@ -12,7 +12,7 @@ Or to run in the foreground:
 bin/cassandra -f
 ```
 
-We're only using one keyspace, called urls, and a table called blacklist. Blacklist has four fields, url, created (timestamp), last_updated (timestamp) and is_bad (smallint). The primary key is url, because we need to quickly look up urls. Created, last_updated, and is_bad aren't in use right now, but they might be useful in the future. Created should never change. Last_updated will change if somebody tried to add a url that's already in the database. is_bad is set to 1 on insert. It could be used later, say changed to 0 if we find out the url is not malicious. We could also add field for severity of maliciousness, which user entered the url, etc. 
+We're only using one keyspace, called urls, and a table called blacklist. Blacklist has four fields, url, created (timestamp), last_updated (timestamp) and is_bad (smallint). The primary key is url, because we need to quickly look up urls. Created, last_updated, and is_bad aren't in use right now, but they might be useful in the future. Created should never change. Last_updated will change if somebody tried to add a url that's already in the database. is_bad is set to 1 on insert. It could be used later, say changed to 0 if we find out the url is not malicious. We could also add fields for severity of maliciousness, which user entered the url, etc. 
 
 Currently both read and write access the same database. If performance became an issue, it would make sense to have a separate database for reading and writing, with reading not requiring all of the fields. Caching is turned on for keys, and filtering is turned off. Of course that should be changed as per production requirements. 
 
@@ -33,6 +33,8 @@ CREATE TABLE blacklist (
 
 ## NodeJS
 As already mentioned, the API level runs in NodeJS. Node version > 5.3 and npm version > 3.4 are recommended. If you're running locally on default ports, you can just start the server. If you change anything (IP address of Cassandra, or the Node port, for example) make your changes in app_config.js. Node is using the cluster module, which allows it to run an instance on each CPU on the machine. To turn this off, set `config.use_cluster = false;` in app_config.js. It's also using morgan for logging, which currently is going to `process.stdout`. Express is used as the http server, and the Datastax Cassandra driver is used to connect to Cassandra. 
+
+Responses to the api are simple string messages. GET requests tell you if it's safe or not to proceed to the url. POST requests thanks you for updating the blacklist or tells you the url is malformed (example,com). Strings were decided over true/false because true/false can be confusing. Is it true the url is in the blacklist, or true it's ok to proceed to the url? 
 
 Steps to get Node started:
 ```
