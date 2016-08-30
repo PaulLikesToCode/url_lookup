@@ -64,7 +64,7 @@ For this project, subdomains are treated separately. For example, putting mail.y
 This, however, leads to a problem with what to do with 'www.'. Say a naked domain, example.com, is entered into the blacklist. The next user looks up 'www.example.com', and is told that's ok. Then the 2nd user goes and gets some malware from www.example.com. On the question of how restrictive to make url_lookup, I have erred on the side of flexibility. It will be easy to make it more restrictive, harder to make it more flexible. 
 
 ### Unit Tests
-A few unit tests written. to run the tests:
+A few unit tests written. To run the tests:
 ```
 cd tests/
 npm install mocha
